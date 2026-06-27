@@ -1,0 +1,21 @@
+[package]
+name = "pqforge_core"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[lib]
+name = "pqforge_core"
+# cdylib: the shared library Dart loads via dart:ffi.
+# rlib:   lets `cargo test` unit-test the internals directly.
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+# Phase 2 cryptographic core (AWS-LC via aws-lc-rs). `unstable` exposes the
+# ML-KEM (kem) and ML-DSA (unstable::signature) post-quantum surface.
+aws-lc-rs = { version = "1.13", features = ["unstable"] }
+zeroize = { version = "1.9", features = ["zeroize_derive"] }
+
+[target.'cfg(unix)'.dependencies]
+libc = "0.2"

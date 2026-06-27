@@ -1,0 +1,15 @@
+# Cargo workspace for the pqforge_ffi native core.
+[workspace]
+resolver = "2"
+members = ["crates/pqforge_core"]
+
+[workspace.package]
+edition = "2021"
+license = "AGPL-3.0-or-later OR LicenseRef-Commercial"
+rust-version = "1.82"
+
+[profile.release]
+opt-level = 3
+codegen-units = 1
+panic = "unwind"        # REQUIRED: the FFI panic guard needs unwinding, not abort
+strip = "symbols"
