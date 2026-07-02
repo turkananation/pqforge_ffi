@@ -76,6 +76,7 @@ pub enum PqForgeError {
     InvalidKey(String),
     InvalidCiphertext,
     AuthFailed,
+    Io(String),
     Unsupported(String),
     Internal(String),
 }
@@ -86,6 +87,7 @@ impl PqForgeError {
             Self::InvalidKey(_) => PqForgeStatus::InvalidKey,
             Self::InvalidCiphertext => PqForgeStatus::InvalidCiphertext,
             Self::AuthFailed => PqForgeStatus::AuthFailed,
+            Self::Io(_) => PqForgeStatus::Io,
             Self::Unsupported(_) => PqForgeStatus::Unsupported,
             Self::Internal(_) => PqForgeStatus::Internal,
         }

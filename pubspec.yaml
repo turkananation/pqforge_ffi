@@ -9,7 +9,13 @@ environment:
 # Add regular dependencies here.
 dependencies:
   ffi: ^2.2.0
-  pqforge: ^0.2.2
+  pointycastle: ^4.0.0
+  # pqforge 0.3.0 (classical + lattice provider seams) is not yet on pub.dev;
+  # pin the released tag directly. Swap back to a hosted `^0.3.0` once published.
+  pqforge:
+    git:
+      url: https://github.com/turkananation/pqforge.git
+      ref: v0.3.0
   # path: ^1.9.0
 
 dev_dependencies:

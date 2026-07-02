@@ -2,6 +2,8 @@ import 'dart:typed_data';
 
 import 'package:pqforge/pqforge.dart';
 
+import '../api/envelope.dart';
+import '../api/stream.dart';
 import 'backend.dart';
 import 'fallback_backend.dart';
 import 'native_backend.dart';
@@ -63,15 +65,16 @@ final class PqForge {
   PqKeyPair generateKemKeyPair(PqKemAlgorithm algorithm) =>
       backend.kemGenerate(algorithm);
 
-  PqKemEncapsulation encapsulate(PqKemAlgorithm algorithm, Uint8List publicKey) =>
-      backend.kemEncapsulate(algorithm, publicKey);
+  PqKemEncapsulation encapsulate(
+    PqKemAlgorithm algorithm,
+    Uint8List publicKey,
+  ) => backend.kemEncapsulate(algorithm, publicKey);
 
   Uint8List decapsulate(
     PqKemAlgorithm algorithm,
     Uint8List secretKey,
     Uint8List ciphertext,
-  ) =>
-      backend.kemDecapsulate(algorithm, secretKey, ciphertext);
+  ) => backend.kemDecapsulate(algorithm, secretKey, ciphertext);
 
   PqKeyPair generateSignatureKeyPair(PqSignatureAlgorithm algorithm) =>
       backend.signGenerate(algorithm);
@@ -80,14 +83,51 @@ final class PqForge {
     PqSignatureAlgorithm algorithm,
     Uint8List secretKey,
     Uint8List message,
-  ) =>
-      backend.sign(algorithm, secretKey, message);
+  ) => backend.sign(algorithm, secretKey, message);
 
   bool verify(
     PqSignatureAlgorithm algorithm,
     Uint8List publicKey,
     Uint8List message,
     Uint8List signature,
-  ) =>
-      backend.verify(algorithm, publicKey, message, signature);
+  ) => backend.verify(algorithm, publicKey, message, signature);
+
+  Uint8List aeadSeal(
+    PqAeadAlgorithm algorithm,
+    Uint8List key,
+    Uint8List nonce,
+    Uint8List plaintext,
+    Uint8List aad,
+  ) => backend.aeadSeal(algorithm, key, nonce, plaintext, aad);
+
+  Uint8List aeadOpen(
+    PqAeadAlgorithm algorithm,
+    Uint8List key,
+    Uint8List nonce,
+    Uint8List ciphertext,
+    Uint8List aad,
+  ) => backend.aeadOpen(algorithm, key, nonce, ciphertext, aad);
+
+  /// Seals [plaintext] to [recipientPublicKey] as a single-shot KEM-DEM envelope
+  /// (ML-KEM → HKDF-SHA256 → AES-256-GCM) using the resolved backend.
+  Uint8List sealEnvelope(
+    PqKemAlgorithm kemAlgorithm,
+    Uint8List recipientPublicKey,
+    Uint8List plaintext, {
+    Uint8List? aad,
+  }) => PqForgeEnvelope(
+    backend,
+  ).seal(kemAlgorithm, recipientPublicKey, plaintext, aad: aad);
+
+  /// Opens a KEM-DEM [envelope] with [recipientSecretKey] using the resolved
+  /// backend.
+  Uint8List openEnvelope(
+    Uint8List recipientSecretKey,
+    Uint8List envelope, {
+    Uint8List? aad,
+  }) => PqForgeEnvelope(backend).open(recipientSecretKey, envelope, aad: aad);
+
+  /// A streaming AEAD helper (the STREAM construction) bound to the active
+  /// backend, for arbitrarily large / TB-scale data.
+  PqForgeStream get stream => PqForgeStream(backend);
 }

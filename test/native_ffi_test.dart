@@ -12,17 +12,17 @@ typedef _StatusEchoNative = Int32 Function(Int32);
 typedef _StatusEchoDart = int Function(int);
 typedef _SelftestPanicNative = Int32 Function();
 typedef _SelftestPanicDart = int Function();
-typedef _StatusMessageNative = Int32 Function(
-    Int32, Pointer<Uint8>, Size, Pointer<Size>);
-typedef _StatusMessageDart = int Function(
-    int, Pointer<Uint8>, int, Pointer<Size>);
+typedef _StatusMessageNative =
+    Int32 Function(Int32, Pointer<Uint8>, Size, Pointer<Size>);
+typedef _StatusMessageDart =
+    int Function(int, Pointer<Uint8>, int, Pointer<Size>);
 
 String _nativeLibPath() {
   final name = Platform.isWindows
       ? 'pqforge_core.dll'
       : Platform.isMacOS
-          ? 'libpqforge_core.dylib'
-          : 'libpqforge_core.so';
+      ? 'libpqforge_core.dylib'
+      : 'libpqforge_core.so';
   return '${Directory.current.path}/rust/target/release/$name';
 }
 
@@ -33,8 +33,11 @@ String _nativeLibPath() {
 void main() {
   final libPath = _nativeLibPath();
   if (!File(libPath).existsSync()) {
-    test('native FFI smoke test',
-        () {}, skip: 'native library not built at $libPath');
+    test(
+      'native FFI smoke test',
+      () {},
+      skip: 'native library not built at $libPath',
+    );
     return;
   }
 
@@ -47,15 +50,19 @@ void main() {
   setUpAll(() {
     lib = DynamicLibrary.open(libPath);
     abiVersion = lib.lookupFunction<_AbiVersionNative, _AbiVersionDart>(
-        'pqforge_abi_version');
+      'pqforge_abi_version',
+    );
     statusEcho = lib.lookupFunction<_StatusEchoNative, _StatusEchoDart>(
-        'pqforge_status_echo');
-    selftestPanic =
-        lib.lookupFunction<_SelftestPanicNative, _SelftestPanicDart>(
-            'pqforge_selftest_panic');
-    statusMessage =
-        lib.lookupFunction<_StatusMessageNative, _StatusMessageDart>(
-            'pqforge_status_message');
+      'pqforge_status_echo',
+    );
+    selftestPanic = lib
+        .lookupFunction<_SelftestPanicNative, _SelftestPanicDart>(
+          'pqforge_selftest_panic',
+        );
+    statusMessage = lib
+        .lookupFunction<_StatusMessageNative, _StatusMessageDart>(
+          'pqforge_status_message',
+        );
   });
 
   test('native ABI version matches kPqForgeAbiVersion', () {
@@ -63,14 +70,20 @@ void main() {
   });
 
   test('status codes round-trip through the shared taxonomy', () {
-    expect(statusEcho(PqForgeErrorCode.invalidKey.value),
-        PqForgeErrorCode.invalidKey.value);
-    expect(statusEcho(PqForgeErrorCode.bufferTooSmall.value),
-        PqForgeErrorCode.bufferTooSmall.value);
+    expect(
+      statusEcho(PqForgeErrorCode.invalidKey.value),
+      PqForgeErrorCode.invalidKey.value,
+    );
+    expect(
+      statusEcho(PqForgeErrorCode.bufferTooSmall.value),
+      PqForgeErrorCode.bufferTooSmall.value,
+    );
     // An unknown code folds to internal — identical to Dart's fromValue rule.
     expect(statusEcho(999), PqForgeErrorCode.internal.value);
     expect(
-        PqForgeErrorCode.fromValue(statusEcho(999)), PqForgeErrorCode.internal);
+      PqForgeErrorCode.fromValue(statusEcho(999)),
+      PqForgeErrorCode.internal,
+    );
   });
 
   test('a Rust panic cannot cross FFI: returns internal, process survives', () {
@@ -84,8 +97,12 @@ void main() {
     final buf = calloc<Uint8>(64);
     final lenPtr = calloc<Size>();
     try {
-      final rc =
-          statusMessage(PqForgeErrorCode.invalidKey.value, buf, 64, lenPtr);
+      final rc = statusMessage(
+        PqForgeErrorCode.invalidKey.value,
+        buf,
+        64,
+        lenPtr,
+      );
       expect(rc, PqForgeErrorCode.ok.value);
       final name = String.fromCharCodes(buf.asTypedList(lenPtr.value));
       expect(name, 'invalid_key');
@@ -99,8 +116,12 @@ void main() {
     final small = calloc<Uint8>(2);
     final lenPtr = calloc<Size>();
     try {
-      final rc =
-          statusMessage(PqForgeErrorCode.invalidKey.value, small, 2, lenPtr);
+      final rc = statusMessage(
+        PqForgeErrorCode.invalidKey.value,
+        small,
+        2,
+        lenPtr,
+      );
       expect(rc, PqForgeErrorCode.bufferTooSmall.value);
       expect(lenPtr.value, 'invalid_key'.length);
     } finally {
@@ -112,8 +133,12 @@ void main() {
   test('status_message rejects a null out_len pointer', () {
     final buf = calloc<Uint8>(64);
     try {
-      final rc =
-          statusMessage(PqForgeErrorCode.invalidKey.value, buf, 64, nullptr);
+      final rc = statusMessage(
+        PqForgeErrorCode.invalidKey.value,
+        buf,
+        64,
+        nullptr,
+      );
       expect(rc, PqForgeErrorCode.nullArgument.value);
     } finally {
       calloc.free(buf);

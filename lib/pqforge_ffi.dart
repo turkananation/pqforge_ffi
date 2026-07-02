@@ -17,11 +17,24 @@ export 'package:pqforge/pqforge.dart'
         PqSignatureAlgorithm,
         PqKeyPair,
         PqKemEncapsulation,
-        PqForgeProfile;
+        PqForgeProfile,
+        PqLattice,
+        PqLatticeProvider,
+        PqPureDartLatticeProvider,
+        PqClassical,
+        PqClassicalProvider,
+        PqPureDartClassicalProvider;
 
+export 'src/api/envelope.dart' show PqForgeEnvelope;
+export 'src/api/file_cipher.dart' show PqForgeFileCipher;
+export 'src/api/stream.dart' show PqForgeStream;
 export 'src/backend/backend.dart'
-    show PqForgeBackend, BackendKind, kPqForgeAbiVersion;
+    show PqForgeBackend, BackendKind, PqAeadAlgorithm, kPqForgeAbiVersion;
 export 'src/backend/fallback_backend.dart' show FallbackBackend;
 export 'src/backend/native_backend.dart' show NativeBackend;
 export 'src/backend/selector.dart' show PqForge;
+export 'src/integration/native_lattice_provider.dart'
+    show NativePqforgeLatticeProvider;
+export 'src/integration/native_classical_provider.dart'
+    show NativePqforgeClassicalProvider;
 export 'src/model/errors.dart';

@@ -10,6 +10,25 @@ const int kPqForgeAbiVersion = 1;
 /// Identifies which implementation answered a call (diagnostics + tests).
 enum BackendKind { native, fallback }
 
+/// AEAD suites supported across both backends. [id] is the native C-ABI
+/// algorithm id; sizes are in bytes.
+enum PqAeadAlgorithm {
+  aes256Gcm(id: 0, keyBytes: 32, nonceBytes: 12, tagBytes: 16),
+  chaCha20Poly1305(id: 1, keyBytes: 32, nonceBytes: 12, tagBytes: 16);
+
+  const PqAeadAlgorithm({
+    required this.id,
+    required this.keyBytes,
+    required this.nonceBytes,
+    required this.tagBytes,
+  });
+
+  final int id;
+  final int keyBytes;
+  final int nonceBytes;
+  final int tagBytes;
+}
+
 /// The single contract both the native (FFI) backend and the pure-Dart
 /// [FallbackBackend] satisfy.
 ///
@@ -68,5 +87,28 @@ abstract interface class PqForgeBackend {
     Uint8List publicKey,
     Uint8List message,
     Uint8List signature,
+  );
+
+  // --- AEAD (FIPS 197 / SP 800-38D) ---
+
+  /// Seals [plaintext] under [key]/[nonce] with associated data [aad],
+  /// returning `ciphertext || tag`. The caller MUST ensure [nonce] is unique
+  /// per [key] — AES-GCM nonce reuse is catastrophic.
+  Uint8List aeadSeal(
+    PqAeadAlgorithm algorithm,
+    Uint8List key,
+    Uint8List nonce,
+    Uint8List plaintext,
+    Uint8List aad,
+  );
+
+  /// Verifies and decrypts [ciphertext] (`ct || tag`). Throws a
+  /// `VerificationFailedException` if the tag is invalid.
+  Uint8List aeadOpen(
+    PqAeadAlgorithm algorithm,
+    Uint8List key,
+    Uint8List nonce,
+    Uint8List ciphertext,
+    Uint8List aad,
   );
 }

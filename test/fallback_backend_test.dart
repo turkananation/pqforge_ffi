@@ -28,9 +28,16 @@ void main() {
         expect(enc.ciphertext.length, alg.ciphertextBytes);
         expect(enc.sharedSecret.length, alg.sharedSecretBytes);
 
-        final recovered = backend.kemDecapsulate(alg, kp.secretKey, enc.ciphertext);
-        expect(recovered, equals(enc.sharedSecret),
-            reason: 'decapsulated secret must equal the encapsulated one');
+        final recovered = backend.kemDecapsulate(
+          alg,
+          kp.secretKey,
+          enc.ciphertext,
+        );
+        expect(
+          recovered,
+          equals(enc.sharedSecret),
+          reason: 'decapsulated secret must equal the encapsulated one',
+        );
       });
     }
 
@@ -41,18 +48,20 @@ void main() {
       );
     });
 
-    test('a corrupted ciphertext yields a different secret (implicit rejection)',
-        () {
-      const alg = PqKemAlgorithm.mlKem768;
-      final kp = backend.kemGenerate(alg);
-      final enc = backend.kemEncapsulate(alg, kp.publicKey);
-      final tampered = Uint8List.fromList(enc.ciphertext)..[0] ^= 0xFF;
+    test(
+      'a corrupted ciphertext yields a different secret (implicit rejection)',
+      () {
+        const alg = PqKemAlgorithm.mlKem768;
+        final kp = backend.kemGenerate(alg);
+        final enc = backend.kemEncapsulate(alg, kp.publicKey);
+        final tampered = Uint8List.fromList(enc.ciphertext)..[0] ^= 0xFF;
 
-      final recovered = backend.kemDecapsulate(alg, kp.secretKey, tampered);
-      // ML-KEM never errors on a bad ciphertext; it returns a pseudo-random
-      // secret derived from the key, which differs from the real one.
-      expect(recovered, isNot(equals(enc.sharedSecret)));
-    });
+        final recovered = backend.kemDecapsulate(alg, kp.secretKey, tampered);
+        // ML-KEM never errors on a bad ciphertext; it returns a pseudo-random
+        // secret derived from the key, which differs from the real one.
+        expect(recovered, isNot(equals(enc.sharedSecret)));
+      },
+    );
   });
 
   group('ML-DSA (FIPS 204)', () {
@@ -91,13 +100,15 @@ void main() {
   });
 
   group('selector', () {
-    test('resolves the pure-Dart fallback when no native library is present',
-        () {
-      PqForge.reset();
-      final pq = PqForge.instance();
-      expect(pq.backendKind, BackendKind.fallback);
-      expect(pq.isAccelerated, isFalse);
-    });
+    test(
+      'resolves the pure-Dart fallback when no native library is present',
+      () {
+        PqForge.reset();
+        final pq = PqForge.instance();
+        expect(pq.backendKind, BackendKind.fallback);
+        expect(pq.isAccelerated, isFalse);
+      },
+    );
 
     test('end-to-end via the selector: ML-KEM + ML-DSA round-trip', () {
       PqForge.reset();
@@ -105,12 +116,19 @@ void main() {
 
       final kem = pq.generateKemKeyPair(PqKemAlgorithm.mlKem512);
       final enc = pq.encapsulate(PqKemAlgorithm.mlKem512, kem.publicKey);
-      final ss =
-          pq.decapsulate(PqKemAlgorithm.mlKem512, kem.secretKey, enc.ciphertext);
+      final ss = pq.decapsulate(
+        PqKemAlgorithm.mlKem512,
+        kem.secretKey,
+        enc.ciphertext,
+      );
       expect(ss, equals(enc.sharedSecret));
 
       final signer = pq.generateSignatureKeyPair(PqSignatureAlgorithm.mlDsa44);
-      final sig = pq.sign(PqSignatureAlgorithm.mlDsa44, signer.secretKey, message);
+      final sig = pq.sign(
+        PqSignatureAlgorithm.mlDsa44,
+        signer.secretKey,
+        message,
+      );
       expect(
         pq.verify(PqSignatureAlgorithm.mlDsa44, signer.publicKey, message, sig),
         isTrue,

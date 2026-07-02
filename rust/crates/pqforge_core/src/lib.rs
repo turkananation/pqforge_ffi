@@ -8,6 +8,7 @@
 
 mod crypto;
 mod error;
+mod secret;
 
 pub use error::{guard, PqForgeError, PqForgeStatus, PqResult};
 

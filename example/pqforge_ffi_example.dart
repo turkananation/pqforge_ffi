@@ -17,14 +17,18 @@ void main() {
   final kemKeys = pq.generateKemKeyPair(kem);
   final enc = pq.encapsulate(kem, kemKeys.publicKey);
   final shared = pq.decapsulate(kem, kemKeys.secretKey, enc.ciphertext);
-  print('ML-KEM-768 shared secret match: '
-      '${base64Encode(shared) == base64Encode(enc.sharedSecret)}');
+  print(
+    'ML-KEM-768 shared secret match: '
+    '${base64Encode(shared) == base64Encode(enc.sharedSecret)}',
+  );
 
   // ML-DSA-65 sign / verify.
   const sig = PqSignatureAlgorithm.mlDsa65;
   final signKeys = pq.generateSignatureKeyPair(sig);
   final message = Uint8List.fromList(utf8.encode('attack at dawn'));
   final signature = pq.sign(sig, signKeys.secretKey, message);
-  print('ML-DSA-65 verify: '
-      '${pq.verify(sig, signKeys.publicKey, message, signature)}');
+  print(
+    'ML-DSA-65 verify: '
+    '${pq.verify(sig, signKeys.publicKey, message, signature)}',
+  );
 }

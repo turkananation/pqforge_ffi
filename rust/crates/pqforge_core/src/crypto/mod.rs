@@ -5,8 +5,11 @@
 //! ML-DSA surface is wired in. The probe is also exposed over the C-ABI so Dart
 //! can confirm the accelerated backend is genuinely live, not merely loaded.
 
+mod aead;
+mod classical;
 mod kem;
 mod sign;
+mod stream_file;
 
 use std::os::raw::c_int;
 

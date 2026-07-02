@@ -54,37 +54,37 @@ sealed class PqForgeFfiException implements Exception {
 /// Key material was malformed (wrong length, wrong parameter set, corrupt).
 final class InvalidKeyException extends PqForgeFfiException {
   const InvalidKeyException(String message)
-      : super(message, PqForgeErrorCode.invalidKey);
+    : super(message, PqForgeErrorCode.invalidKey);
 }
 
 /// A ciphertext / encapsulation was malformed or failed an integrity check.
 final class InvalidCiphertextException extends PqForgeFfiException {
   const InvalidCiphertextException(String message)
-      : super(message, PqForgeErrorCode.invalidCiphertext);
+    : super(message, PqForgeErrorCode.invalidCiphertext);
 }
 
 /// A signature or AEAD tag failed verification.
 final class VerificationFailedException extends PqForgeFfiException {
   const VerificationFailedException(String message)
-      : super(message, PqForgeErrorCode.authFailed);
+    : super(message, PqForgeErrorCode.authFailed);
 }
 
 /// The requested operation is not available on the active backend (e.g. raw
 /// block-device I/O on the pure-Dart fallback).
 final class UnsupportedBackendException extends PqForgeFfiException {
   const UnsupportedBackendException(String message)
-      : super(message, PqForgeErrorCode.unsupported);
+    : super(message, PqForgeErrorCode.unsupported);
 }
 
 /// The native library could not be loaded, probed, or its ABI did not match.
 final class NativeBindingException extends PqForgeFfiException {
   const NativeBindingException(String message)
-      : super(message, PqForgeErrorCode.internal);
+    : super(message, PqForgeErrorCode.internal);
 }
 
 /// A cryptographic operation failed for an internal/unexpected reason
 /// (including a recovered Rust panic crossing the FFI boundary).
 final class InternalCryptoException extends PqForgeFfiException {
   const InternalCryptoException(String message)
-      : super(message, PqForgeErrorCode.internal);
+    : super(message, PqForgeErrorCode.internal);
 }
