@@ -1,0 +1,93 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    name: ${{ matrix.asset }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            built: libpqforge_core.so
+            asset: libpqforge_core-linux-x86_64.so
+          - os: ubuntu-24.04-arm
+            target: aarch64-unknown-linux-gnu
+            built: libpqforge_core.so
+            asset: libpqforge_core-linux-aarch64.so
+          - os: macos-15
+            target: aarch64-apple-darwin
+            built: libpqforge_core.dylib
+            asset: libpqforge_core-macos-aarch64.dylib
+          - os: macos-15-intel
+            target: x86_64-apple-darwin
+            built: libpqforge_core.dylib
+            asset: libpqforge_core-macos-x86_64.dylib
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            built: pqforge_core.dll
+            asset: pqforge_core-windows-x86_64.dll
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - uses: ilammy/setup-nasm@v1
+        if: runner.os == 'Windows'
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: rust
+          key: ${{ matrix.target }}
+      # Ship nothing untested: the full Rust suite runs on every target that
+      # produces a release artifact (AWS-LC self-tests included).
+      - name: Test (release)
+        run: cargo test --release --target ${{ matrix.target }}
+        working-directory: rust
+      - name: Build
+        run: cargo build --release --target ${{ matrix.target }}
+        working-directory: rust
+      - name: Stage asset
+        shell: bash
+        run: |
+          mkdir -p dist
+          cp "rust/target/${{ matrix.target }}/release/${{ matrix.built }}" "dist/${{ matrix.asset }}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.asset }}
+          path: dist/${{ matrix.asset }}
+          if-no-files-found: error
+
+  release:
+    name: Publish GitHub release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Checksums
+        working-directory: dist
+        run: sha256sum * | tee SHA256SUMS
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: true
+          body: |
+            Native `pqforge_core` libraries for `pqforge_ffi` ${{ github.ref_name }}.
+
+            Verify a download before loading it: `sha256sum -c SHA256SUMS --ignore-missing`.
+
+            Dual-licensed **AGPL-3.0-only OR commercial** — see `LICENSE` and
+            `COMMERCIAL-LICENSE.md` in the repository.
