@@ -118,12 +118,7 @@ pub fn guard<T>(f: impl FnOnce() -> PqResult<T>) -> PqResult<T> {
 /// # Safety
 /// `out` must be valid for `cap` writes (or null); `len` a valid `*mut usize`
 /// (or null).
-pub unsafe fn write_out(
-    src: &[u8],
-    out: *mut u8,
-    cap: usize,
-    len: *mut usize,
-) -> PqForgeStatus {
+pub unsafe fn write_out(src: &[u8], out: *mut u8, cap: usize, len: *mut usize) -> PqForgeStatus {
     if len.is_null() {
         return PqForgeStatus::NullArgument;
     }

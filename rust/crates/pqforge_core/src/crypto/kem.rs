@@ -235,7 +235,15 @@ mod tests {
         let mut sk = vec![0u8; SK];
         let (mut pl, mut sl) = (0usize, 0usize);
         let rc = unsafe {
-            pqforge_mlkem_keygen(ALG, pk.as_mut_ptr(), 10, &mut pl, sk.as_mut_ptr(), SK, &mut sl)
+            pqforge_mlkem_keygen(
+                ALG,
+                pk.as_mut_ptr(),
+                10,
+                &mut pl,
+                sk.as_mut_ptr(),
+                SK,
+                &mut sl,
+            )
         };
         assert_eq!(rc, PqForgeStatus::BufferTooSmall.code());
         assert_eq!(pl, PK);
@@ -247,7 +255,15 @@ mod tests {
         let mut sk = vec![0u8; 4000];
         let (mut pl, mut sl) = (0usize, 0usize);
         let rc = unsafe {
-            pqforge_mlkem_keygen(99, pk.as_mut_ptr(), 2000, &mut pl, sk.as_mut_ptr(), 4000, &mut sl)
+            pqforge_mlkem_keygen(
+                99,
+                pk.as_mut_ptr(),
+                2000,
+                &mut pl,
+                sk.as_mut_ptr(),
+                4000,
+                &mut sl,
+            )
         };
         assert_eq!(rc, PqForgeStatus::InvalidKey.code());
     }

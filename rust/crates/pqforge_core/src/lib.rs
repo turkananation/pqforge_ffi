@@ -26,7 +26,7 @@ pub extern "C" fn pqforge_abi_version() -> u32 {
 /// and Rust error enums agree across the boundary.
 #[no_mangle]
 pub extern "C" fn pqforge_status_echo(code: c_int) -> c_int {
-    PqForgeStatus::from_code(code as i32).code() as c_int
+    PqForgeStatus::from_code(code).code() as c_int
 }
 
 /// Self-test: deliberately panics inside [`guard`]. MUST return `Internal` (9)
@@ -65,7 +65,7 @@ pub unsafe extern "C" fn pqforge_status_message(
     out_len: *mut usize,
 ) -> c_int {
     let status = guard(|| {
-        let name = PqForgeStatus::from_code(code as i32).name();
+        let name = PqForgeStatus::from_code(code).name();
         let bytes = name.as_bytes();
         if out_len.is_null() {
             return Ok(PqForgeStatus::NullArgument);
@@ -112,9 +112,7 @@ mod ffi_tests {
     fn status_message_writes_name() {
         let mut buf = [0u8; 64];
         let mut len: usize = 0;
-        let rc = unsafe {
-            pqforge_status_message(1, buf.as_mut_ptr(), buf.len(), &mut len)
-        };
+        let rc = unsafe { pqforge_status_message(1, buf.as_mut_ptr(), buf.len(), &mut len) };
         assert_eq!(rc, PqForgeStatus::Ok.code());
         assert_eq!(&buf[..len], b"invalid_key");
     }
@@ -123,9 +121,7 @@ mod ffi_tests {
     fn status_message_reports_buffer_too_small() {
         let mut buf = [0u8; 2];
         let mut len: usize = 0;
-        let rc = unsafe {
-            pqforge_status_message(1, buf.as_mut_ptr(), buf.len(), &mut len)
-        };
+        let rc = unsafe { pqforge_status_message(1, buf.as_mut_ptr(), buf.len(), &mut len) };
         assert_eq!(rc, PqForgeStatus::BufferTooSmall.code());
         assert_eq!(len, "invalid_key".len());
     }
@@ -133,9 +129,8 @@ mod ffi_tests {
     #[test]
     fn status_message_rejects_null_out_len() {
         let mut buf = [0u8; 64];
-        let rc = unsafe {
-            pqforge_status_message(1, buf.as_mut_ptr(), buf.len(), std::ptr::null_mut())
-        };
+        let rc =
+            unsafe { pqforge_status_message(1, buf.as_mut_ptr(), buf.len(), std::ptr::null_mut()) };
         assert_eq!(rc, PqForgeStatus::NullArgument.code());
     }
 }

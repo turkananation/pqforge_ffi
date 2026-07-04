@@ -1,0 +1,28 @@
+pqforge_ffi — hardware-accelerated post-quantum cryptography for Dart
+Copyright (c) 2026 Turkana Nation
+
+This software is dual-licensed: GNU Affero General Public License v3.0 only
+(see LICENSE), or a commercial license (see COMMERCIAL-LICENSE.md).
+
+---
+
+Additional permission under GNU AGPL version 3 section 7
+
+If you modify this Program, or any covered work, by linking or combining it
+with AWS-LC and/or aws-lc-rs (or modified versions of those libraries),
+containing parts covered by the terms of the ISC License, the Apache License
+2.0, and/or the OpenSSL License, the licensors of this Program grant you
+additional permission to convey the resulting work without the requirement
+to license those linked components under the AGPL. Corresponding Source for
+a non-source form of such a combination shall include the source code for
+the parts of AWS-LC / aws-lc-rs actually used in the combination, as their
+own licenses already require or permit.
+
+---
+
+Third-party components:
+
+- AWS-LC (https://github.com/aws/aws-lc) — ISC / Apache-2.0 / OpenSSL licenses
+- aws-lc-rs (https://crates.io/crates/aws-lc-rs) — ISC AND (Apache-2.0 OR ISC)
+- zeroize — MIT OR Apache-2.0
+- Dart dependencies (pqforge, ffi, pointycastle) — see their pub.dev pages

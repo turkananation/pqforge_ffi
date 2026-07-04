@@ -277,6 +277,7 @@ mod tests {
     use super::*;
     use std::ffi::CString;
     use std::io::Write;
+    use std::path::Path;
 
     fn tmp(name: &str) -> PathBuf {
         let mut p = std::env::temp_dir();
@@ -284,7 +285,7 @@ mod tests {
         p
     }
 
-    fn seal(alg: c_int, key: &[u8], chunk: usize, input: &PathBuf, output: &PathBuf) -> c_int {
+    fn seal(alg: c_int, key: &[u8], chunk: usize, input: &Path, output: &Path) -> c_int {
         let i = CString::new(input.to_str().unwrap()).unwrap();
         let o = CString::new(output.to_str().unwrap()).unwrap();
         unsafe {
@@ -301,7 +302,7 @@ mod tests {
         }
     }
 
-    fn open(alg: c_int, key: &[u8], chunk: usize, input: &PathBuf, output: &PathBuf) -> c_int {
+    fn open(alg: c_int, key: &[u8], chunk: usize, input: &Path, output: &Path) -> c_int {
         let i = CString::new(input.to_str().unwrap()).unwrap();
         let o = CString::new(output.to_str().unwrap()).unwrap();
         unsafe {

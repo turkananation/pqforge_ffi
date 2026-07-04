@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  rust:
+    name: Rust — fmt, clippy, tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: rust
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: rust
+      - name: Format
+        run: cargo fmt --all --check
+      - name: Clippy
+        run: cargo clippy --all-targets --all-features -- -D warnings
+      - name: Tests
+        run: cargo test --all-features
+
+  dart:
+    name: Dart — analyze, fallback + native tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: stable
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: rust
+      - name: Dependencies
+        run: dart pub get
+      - name: Format
+        run: dart format --output=none --set-exit-if-changed .
+      - name: Analyze
+        run: dart analyze --fatal-infos
+      # First pass without the native library: proves the pure-Dart fallback
+      # path (native suites self-skip). Second pass after building the cdylib:
+      # proves the native engine and the cross-implementation agreement tests.
+      - name: Tests (pure-Dart fallback)
+        run: dart test
+      - name: Build native library
+        run: cargo build --release
+        working-directory: rust
+      - name: Tests (native engine)
+        run: dart test

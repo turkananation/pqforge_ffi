@@ -1,7 +1,10 @@
 name: pqforge_ffi
-description: A starting point for Dart libraries or applications.
-version: 1.0.0
-# repository: https://github.com/my_org/my_repo
+description: >-
+  Hardware-accelerated post-quantum cryptography for Dart: a native AWS-LC
+  engine (ML-KEM, ML-DSA, X25519, Ed25519, AEAD, STREAM) with a byte-compatible
+  pure-Dart fallback.
+version: 0.1.0
+repository: https://github.com/turkananation/pqforge_ffi
 
 environment:
   sdk: ^3.12.0

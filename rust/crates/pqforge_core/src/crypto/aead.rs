@@ -126,7 +126,10 @@ pub unsafe extern "C" fn pqforge_aead_open(
             Some(a) => a,
             None => return Ok(PqForgeStatus::InvalidKey),
         };
-        if key.is_null() || nonce.is_null() || ciphertext.is_null() || (aad.is_null() && aad_len != 0)
+        if key.is_null()
+            || nonce.is_null()
+            || ciphertext.is_null()
+            || (aad.is_null() && aad_len != 0)
         {
             return Ok(PqForgeStatus::NullArgument);
         }
@@ -150,15 +153,12 @@ pub unsafe extern "C" fn pqforge_aead_open(
 
         // The recovered plaintext is secret: hold it in a zeroized buffer.
         let mut in_out = Zeroizing::new(ct_slice.to_vec());
-        let plaintext = match opening.open_in_place(
-            nonce_obj,
-            Aad::from(aad_slice),
-            in_out.as_mut_slice(),
-        ) {
-            Ok(pt) => pt,
-            // Tag verification failed — never release unauthenticated bytes.
-            Err(_) => return Ok(PqForgeStatus::AuthFailed),
-        };
+        let plaintext =
+            match opening.open_in_place(nonce_obj, Aad::from(aad_slice), in_out.as_mut_slice()) {
+                Ok(pt) => pt,
+                // Tag verification failed — never release unauthenticated bytes.
+                Err(_) => return Ok(PqForgeStatus::AuthFailed),
+            };
 
         // SAFETY: caller buffer per contract.
         let s = unsafe { write_out(plaintext, pt_out, pt_cap, pt_len) };
@@ -193,8 +193,18 @@ mod tests {
         let mut cl = 0usize;
         let rc = unsafe {
             pqforge_aead_seal(
-                ALG, key.as_ptr(), key.len(), nonce.as_ptr(), nonce.len(), aad.as_ptr(),
-                aad.len(), pt.as_ptr(), pt.len(), ct.as_mut_ptr(), ct.len(), &mut cl,
+                ALG,
+                key.as_ptr(),
+                key.len(),
+                nonce.as_ptr(),
+                nonce.len(),
+                aad.as_ptr(),
+                aad.len(),
+                pt.as_ptr(),
+                pt.len(),
+                ct.as_mut_ptr(),
+                ct.len(),
+                &mut cl,
             )
         };
         if rc == PqForgeStatus::Ok.code() {
@@ -210,8 +220,18 @@ mod tests {
         let mut pl = 0usize;
         let rc = unsafe {
             pqforge_aead_open(
-                ALG, key.as_ptr(), key.len(), nonce.as_ptr(), nonce.len(), aad.as_ptr(),
-                aad.len(), ct.as_ptr(), ct.len(), pt.as_mut_ptr(), pt.len(), &mut pl,
+                ALG,
+                key.as_ptr(),
+                key.len(),
+                nonce.as_ptr(),
+                nonce.len(),
+                aad.as_ptr(),
+                aad.len(),
+                ct.as_ptr(),
+                ct.len(),
+                pt.as_mut_ptr(),
+                pt.len(),
+                &mut pl,
             )
         };
         if rc == PqForgeStatus::Ok.code() {
@@ -293,8 +313,18 @@ mod tests {
         let mut cl = 0usize;
         let rc = unsafe {
             pqforge_aead_seal(
-                CHACHA, key.as_ptr(), key.len(), nonce.as_ptr(), nonce.len(), aad.as_ptr(),
-                aad.len(), pt.as_ptr(), pt.len(), ct.as_mut_ptr(), ct.len(), &mut cl,
+                CHACHA,
+                key.as_ptr(),
+                key.len(),
+                nonce.as_ptr(),
+                nonce.len(),
+                aad.as_ptr(),
+                aad.len(),
+                pt.as_ptr(),
+                pt.len(),
+                ct.as_mut_ptr(),
+                ct.len(),
+                &mut cl,
             )
         };
         assert_eq!(rc, PqForgeStatus::Ok.code());
@@ -305,8 +335,18 @@ mod tests {
         let mut ol = 0usize;
         let rc = unsafe {
             pqforge_aead_open(
-                CHACHA, key.as_ptr(), key.len(), nonce.as_ptr(), nonce.len(), aad.as_ptr(),
-                aad.len(), ct.as_ptr(), ct.len(), out.as_mut_ptr(), out.len(), &mut ol,
+                CHACHA,
+                key.as_ptr(),
+                key.len(),
+                nonce.as_ptr(),
+                nonce.len(),
+                aad.as_ptr(),
+                aad.len(),
+                ct.as_ptr(),
+                ct.len(),
+                out.as_mut_ptr(),
+                out.len(),
+                &mut ol,
             )
         };
         assert_eq!(rc, PqForgeStatus::Ok.code());
@@ -316,8 +356,18 @@ mod tests {
         ct[0] ^= 0xFF;
         let rc = unsafe {
             pqforge_aead_open(
-                CHACHA, key.as_ptr(), key.len(), nonce.as_ptr(), nonce.len(), aad.as_ptr(),
-                aad.len(), ct.as_ptr(), ct.len(), out.as_mut_ptr(), out.len(), &mut ol,
+                CHACHA,
+                key.as_ptr(),
+                key.len(),
+                nonce.as_ptr(),
+                nonce.len(),
+                aad.as_ptr(),
+                aad.len(),
+                ct.as_ptr(),
+                ct.len(),
+                out.as_mut_ptr(),
+                out.len(),
+                &mut ol,
             )
         };
         assert_eq!(rc, PqForgeStatus::AuthFailed.code());
