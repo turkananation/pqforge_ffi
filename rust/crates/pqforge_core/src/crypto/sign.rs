@@ -12,7 +12,8 @@ use std::slice;
 use aws_lc_rs::encoding::AsRawBytes;
 use aws_lc_rs::signature::{KeyPair, UnparsedPublicKey};
 use aws_lc_rs::unstable::signature::{
-    PqdsaKeyPair, ML_DSA_44, ML_DSA_44_SIGNING, ML_DSA_65, ML_DSA_65_SIGNING, ML_DSA_87, ML_DSA_87_SIGNING,
+    PqdsaKeyPair, ML_DSA_44, ML_DSA_44_SIGNING, ML_DSA_65, ML_DSA_65_SIGNING, ML_DSA_87,
+    ML_DSA_87_SIGNING,
 };
 use zeroize::Zeroizing;
 
@@ -232,7 +233,11 @@ mod tests {
             )
         };
         assert_eq!(rc, PqForgeStatus::Ok.code());
-        assert_eq!((pl, sl), (PK, SK), "aws-lc raw ML-DSA-65 key sizes must match FIPS 204");
+        assert_eq!(
+            (pl, sl),
+            (PK, SK),
+            "aws-lc raw ML-DSA-65 key sizes must match FIPS 204"
+        );
         pk.truncate(pl);
         sk.truncate(sl);
         (pk, sk)
@@ -261,7 +266,15 @@ mod tests {
         assert_eq!(sigl, SIG);
 
         let rc = unsafe {
-            pqforge_mldsa_verify(ALG, pk.as_ptr(), pk.len(), msg.as_ptr(), msg.len(), sig.as_ptr(), SIG)
+            pqforge_mldsa_verify(
+                ALG,
+                pk.as_ptr(),
+                pk.len(),
+                msg.as_ptr(),
+                msg.len(),
+                sig.as_ptr(),
+                SIG,
+            )
         };
         assert_eq!(rc, PqForgeStatus::Ok.code());
     }
@@ -274,13 +287,27 @@ mod tests {
         let mut sigl = 0usize;
         unsafe {
             pqforge_mldsa_sign(
-                ALG, sk.as_ptr(), sk.len(), msg.as_ptr(), msg.len(), sig.as_mut_ptr(), sig.len(),
+                ALG,
+                sk.as_ptr(),
+                sk.len(),
+                msg.as_ptr(),
+                msg.len(),
+                sig.as_mut_ptr(),
+                sig.len(),
                 &mut sigl,
             );
         }
         let bad = b"tampered message";
         let rc = unsafe {
-            pqforge_mldsa_verify(ALG, pk.as_ptr(), pk.len(), bad.as_ptr(), bad.len(), sig.as_ptr(), SIG)
+            pqforge_mldsa_verify(
+                ALG,
+                pk.as_ptr(),
+                pk.len(),
+                bad.as_ptr(),
+                bad.len(),
+                sig.as_ptr(),
+                SIG,
+            )
         };
         assert_eq!(rc, PqForgeStatus::AuthFailed.code());
     }
@@ -291,7 +318,15 @@ mod tests {
         let mut sk = vec![0u8; 5000];
         let (mut pl, mut sl) = (0usize, 0usize);
         let rc = unsafe {
-            pqforge_mldsa_keygen(99, pk.as_mut_ptr(), 3000, &mut pl, sk.as_mut_ptr(), 5000, &mut sl)
+            pqforge_mldsa_keygen(
+                99,
+                pk.as_mut_ptr(),
+                3000,
+                &mut pl,
+                sk.as_mut_ptr(),
+                5000,
+                &mut sl,
+            )
         };
         assert_eq!(rc, PqForgeStatus::InvalidKey.code());
     }
@@ -321,7 +356,11 @@ mod tests {
         }
 
         let seed = [7u8; 32];
-        assert_eq!(pub_from_seed(&seed), pub_from_seed(&seed), "same seed → same key");
+        assert_eq!(
+            pub_from_seed(&seed),
+            pub_from_seed(&seed),
+            "same seed → same key"
+        );
         assert_ne!(
             pub_from_seed(&seed),
             pub_from_seed(&[9u8; 32]),
@@ -335,8 +374,15 @@ mod tests {
         let short = [0u8; 31];
         let rc = unsafe {
             pqforge_mldsa_keygen_from_seed(
-                ALG, short.as_ptr(), short.len(), pk.as_mut_ptr(), pk.len(), &mut pl,
-                sk.as_mut_ptr(), sk.len(), &mut sl,
+                ALG,
+                short.as_ptr(),
+                short.len(),
+                pk.as_mut_ptr(),
+                pk.len(),
+                &mut pl,
+                sk.as_mut_ptr(),
+                sk.len(),
+                &mut sl,
             )
         };
         assert_eq!(rc, PqForgeStatus::InvalidKey.code());
