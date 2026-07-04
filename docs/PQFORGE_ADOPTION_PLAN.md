@@ -1,120 +1,158 @@
-# What `pqforge` needs to consume `pqforge_ffi` v0.1.0
+# pqforge × pqforge_ffi — unified AGPL licensing and dependency plan
 
-> **Status:** plan. Written at the v0.1.0 release of `pqforge_ffi`, whose GitHub
-> release ships prebuilt native libraries (`libpqforge_core-linux-x86_64.so`,
-> `-linux-aarch64.so`, `-macos-{aarch64,x86_64}.dylib`,
-> `pqforge_core-windows-x86_64.dll`) plus a `SHA256SUMS` manifest. Companion to
+> **Status:** plan, **revision 2** (2026-07-04). Supersedes revision 1's ground
+> rules: by owner decision, `pqforge` **switches from MIT to the same dual
+> license as `pqforge_ffi` (AGPL-3.0-only OR commercial)**, and the dependency
+> arrow `pqforge → pqforge_ffi` is **permitted**. Written against `pqforge_ffi`
+> v0.1.0, whose GitHub release ships prebuilt native libraries
+> (`libpqforge_core-linux-x86_64.so`, `-linux-aarch64.so`,
+> `-macos-{aarch64,x86_64}.dylib`, `pqforge_core-windows-x86_64.dll`) plus a
+> `SHA256SUMS` manifest, and `pqforge` 0.3.0 (MIT, on pub.dev). Companion to
 > [`INTEGRATION_AND_HYBRID_PLAN.md`](INTEGRATION_AND_HYBRID_PLAN.md).
 
-## 0. Ground rules (license interplay — read first)
+## 0. License strategy — one stack, one story
 
-- `pqforge` is MIT. `pqforge_ffi` (from v0.1.0) is **AGPL-3.0-only OR
-  commercial**.
-- Therefore `pqforge` must **never depend on `pqforge_ffi`** — not even as a
-  dev/optional dependency. The dependency arrow stays exactly as it is today:
-  `pqforge_ffi → pqforge`. Acceleration is opt-in by the **host application**,
-  which registers the native providers through `pqforge`'s seams.
-- An application that registers `pqforge_ffi`'s providers is combining its work
-  with AGPL-licensed code: it must either be open source under AGPL-compatible
-  terms or hold a commercial license. An application that uses plain `pqforge`
-  is MIT-only, unencumbered. `pqforge`'s README must state this plainly so no
-  adopter is surprised — that disclosure is itself one of the changes below.
+- **Both packages: `AGPL-3.0-only OR commercial`.** `pqforge` relicenses at
+  **v0.4.0**; `pqforge_ffi` already ships dual-licensed at v0.1.0. The pitch
+  becomes uniform: *open-source projects use the entire PQC stack free under
+  the AGPL; businesses that keep their code closed (including SaaS) purchase
+  one commercial license covering both packages.*
+- **History stays honest.** MIT grants are irrevocable for the versions that
+  carried them: `pqforge ≤ 0.3.0` remains MIT forever (users may pin or fork
+  it under MIT); everything from 0.4.0 onward is AGPL/commercial. State this
+  in `pqforge`'s README and CHANGELOG exactly as `pqforge_ffi`'s README does
+  for its own MIT history (≤ `2f3ae05`).
+- **Copyright hygiene.** Dual licensing requires the licensor to own (or have
+  compatible grants for) all inbound contributions. Turkana Nation is sole
+  author of both packages today; before accepting external PRs, add a short
+  CONTRIBUTING note (inbound = outbound + relicense permission, or a DCO).
+- **No §7 NOTICE needed in `pqforge`** — it links no OpenSSL-licensed code;
+  the AWS-LC linking exception stays in `pqforge_ffi`'s NOTICE only. `pqforge`
+  still gets a NOTICE stating the dual license and a COMMERCIAL-LICENSE.md
+  mirroring `pqforge_ffi`'s (same contact:
+  [turkananation@gmail.com](mailto:turkananation@gmail.com)).
+- **Dependency-license check:** `pqforge`'s deps (pointycastle MIT,
+  cryptography Apache-2.0, args/path/etc. BSD) are all permissive and
+  AGPL-compatible — nothing blocks the switch.
 
-## 1. Changes `pqforge` needs (ranked)
+## 1. Dependency architecture — the arrow inverts
 
-### 1.1 Freeze and version the provider seams (required)
+With the license unified there is no legal reason to keep `pqforge` ignorant
+of its accelerator, and one strong product reason to invert:
+**batteries-included acceleration** — `dart pub add pqforge` should be enough
+for a user to get native speed when a verified library is present.
 
-`PqLatticeProvider` and `PqClassicalProvider` are now a **public ABI contract**
-consumed by an out-of-repo accelerator. From `pqforge` 0.3.x onward:
+```text
+ rev 1 (license-driven):   pqforge_ffi ──→ pqforge          (app wires providers)
+ rev 2 (this plan):        pqforge 0.4.0 ──→ pqforge_ffi 0.2.0 ──→ pqforge (interfaces)
+```
 
-- Treat any change to the provider interfaces (method signatures, added
-  members, semantics of `seed`/`nonce`/`context`/`preHash`) as a **breaking
-  change** requiring a major/minor version gate and a CHANGELOG callout.
-- Document, on each provider method, which operations must be
-  **byte-deterministic** (kemDecapsulate, dsaVerify, seeded keygen, X25519
-  ECDH, Ed25519) versus randomized — this is the contract the accelerator's
-  cross-implementation KATs pin.
+- **The cycle is deliberate and bounded.** `pqforge_ffi` needs `pqforge` for
+  the provider interfaces and the pure-Dart fallback; `pqforge` 0.4.0 gains a
+  dependency on `pqforge_ffi` for auto-registration. Pub's solver permits
+  dependency cycles between hosted packages; both packages are released by one
+  owner in lockstep, which is the one situation where a cycle is manageable.
+  **First-publish order resolves the chicken-and-egg:** publish
+  `pqforge_ffi` 0.2.0 to pub.dev first (it depends only on the already-hosted
+  `pqforge ^0.3.0`), then `pqforge` 0.4.0 (depending on `pqforge_ffi ^0.2.0`).
+- **Fallback if pub.dev's publish validation ever objects to the cycle:** a
+  three-package layout (`pqforge` core-with-interfaces ← `pqforge_ffi` ←
+  thin `pqforge_native` glue) — held in reserve, not the plan of record.
+- **Prerequisite:** `pqforge_ffi` must be **published to pub.dev** (it is not
+  today — v0.1.0 is a GitHub release only). It already carries a proper
+  LICENSE; pub.dev accepts AGPL-licensed packages.
 
-### 1.2 Export the conformance harnesses (required)
+### 1.1 What `pqforge` 0.4.0 does with the dependency
 
-`test/support/lattice_conformance.dart` lives in `pqforge`'s test tree, so an
-external provider cannot import it. Add a public library, e.g.
-`package:pqforge/conformance.dart`, exposing:
+- **Respect the pure-barrel hard constraint.** `pqforge`'s AGENTS.md mandates
+  that `package:pqforge/pqforge.dart` stays pure Dart / web-safe (no `dart:ffi`
+  or `dart:io` in its transitive import graph). The `pqforge_ffi` dependency
+  therefore attaches to a **separate entrypoint** — `pqforge_io.dart` or a new
+  `package:pqforge/pqforge_accel.dart` — which is where auto-registration
+  lives. Web and pure users import the main barrel and never touch FFI.
+  AGENTS.md's "only sanctioned FFI is `tool/openssl_interop/`" rule must be
+  amended in the same PR that adds the dependency.
+- **Auto-registration:** at startup (lazily, on first crypto use, or via an
+  explicit `PqAcceleration.enable()`), `pqforge` asks `pqforge_ffi` to locate
+  a native library — `PQFORGE_NATIVE_LIB` env var, then a well-known cache
+  path (`~/.cache/pqforge/native/<tag>/<asset>`) — **verifies its SHA-256
+  against the checksum table baked into the package** (see §1.2), and
+  registers `NativePqforgeLatticeProvider` + `NativePqforgeClassicalProvider`.
+  Any failure → pure Dart, silently, exactly as today. Also
+  `PqAcceleration.disable()` and a diagnostics getter (which engine served).
+- **CLI:** `pqforge accelerate fetch` — downloads the right release asset for
+  the current platform, verifies it against the **baked-in** checksums, and
+  installs it into the cache path. Explicit user action, so it does not
+  violate the no-silent-downloads rule (§4). `pqforge accelerate status`
+  prints engine, library path, and hash.
+- **Docs:** README gains a "Hardware acceleration" section — two lines to
+  enable, where binaries come from, and the licensing statement from §0.
 
-- the lattice conformance/agreement harness (existing);
-- a **classical** conformance harness (X25519 agreement symmetry, Ed25519
-  KAT/round-trip, tamper rejection) mirroring it.
+### 1.2 What `pqforge_ffi` 0.2.0 needs before that (publish gate)
 
-Then `pqforge_ffi`'s CI can run the *upstream* conformance suite against the
-native providers on every commit, instead of re-deriving it.
+- **Checksum-pinned loader:** `verifyAndOpen(path, sha256: …)` refusing to
+  load a non-matching library, plus a generated `release_checksums.dart`
+  (tag → asset → SHA-256 map, produced from `SHA256SUMS` at release time) so
+  downstream verification never fetches a checksum over the network.
+- **pub.dev publish readiness:** `dart pub publish --dry-run` clean;
+  `.pubignore` for `rust/target`; keep the repo's Rust source in the package
+  (source builds) but document that binaries come from GitHub releases.
+- Existing v0.1.0 surface is otherwise sufficient — the providers and
+  fallback semantics are already proven (190 native-mode tests).
 
-### 1.3 README "Hardware acceleration" section (required)
+### 1.3 Seam work that survives from revision 1 (still required)
 
-A short section in `pqforge`'s README:
+- **Freeze the provider seams** (`PqLatticeProvider`, `PqClassicalProvider`)
+  as a versioned public contract; document which operations are
+  byte-deterministic (kemDecapsulate, dsaVerify, seeded keygen, X25519 ECDH,
+  Ed25519) versus randomized.
+- **Export the conformance harnesses** as `package:pqforge/conformance.dart`
+  (lattice + a new classical harness) so `pqforge_ffi` CI runs the upstream
+  suite against the native providers on every commit.
+- **AEAD engine seam** (`PqForgeEngine.provider`) in a later minor — lets the
+  accelerator take AES-256-GCM / ChaCha20-Poly1305 (completes Phase β).
+- **RNG note + test** that `PqRandom.generator` governs every random draw.
 
-- point to `pqforge_ffi` and the release-asset naming scheme;
-- show the two-line registration (`PqLattice.provider = …`,
-  `PqClassical.provider = …`);
-- state the license interplay from §0 explicitly (MIT core, AGPL/commercial
-  accelerator);
-- instruct apps to **verify the downloaded library against `SHA256SUMS`
-  before loading it** (see §2).
+## 2. Relicensing `pqforge` — exact mechanical steps (v0.4.0)
 
-### 1.4 AEAD engine seam (next minor, enables Phase β)
-
-`PqForgeEngineProvider` selects between built-in engines but has no seam for a
-custom native engine. Add one (mirroring `PqLattice.provider`):
-`PqForgeEngine.provider`, defaulting to the current selection logic. This lets
-`pqforge_ffi` route AES-256-GCM / ChaCha20-Poly1305 through AWS-LC and closes
-the largest remaining pure-Dart hot path after the lattice math.
-
-### 1.5 RNG seam hardening (cheap, same minor as 1.4)
-
-`PqRandom.generator` is already swappable. Add a doc note + test that a
-registered generator is used by *every* random draw (keygen, encapsulation,
-nonces), so a native FIPS DRBG can be registered with confidence.
-
-### 1.6 Diagnostics surface (nice-to-have)
-
-`PqLattice.provider.name` exists; add a tiny
-`PqForge.diagnostics()` (active lattice/classical provider names + versions)
-so applications can log what engine actually served them — useful when a
-fleet mixes accelerated and fallback nodes.
-
-## 2. How applications should fetch and pin the native library
-
-`pub.dev` cannot ship the binary, so apps (not `pqforge`) fetch it:
-
-1. Download the asset for the current platform from
-   `https://github.com/turkananation/pqforge_ffi/releases/download/v0.1.0/<asset>`.
-2. Verify its SHA-256 against the release's `SHA256SUMS` **pinned in the app's
-   source** (not fetched at runtime — a fetched checksum verifies nothing).
-3. Store under an app-controlled dir (e.g. `~/.cache/<app>/pqforge/<tag>/`).
-4. Load by explicit path: `NativePqforgeLatticeProvider.open(path)` etc.
-   Any failure (missing file, ABI mismatch, self-test) silently degrades to
-   pure Dart — the app stays correct, just slower.
-
-`pqforge_ffi` v0.2 candidates that make this smoother (tracked here, not in
-`pqforge`): a `verifyAndOpen(path, sha256: …)` helper that refuses to load a
-tampered library; a `tool/fetch_native.dart` consumers can vendor; Dart Native
-Assets (`hook/build.dart`) auto-bundling, which removes the manual fetch
-entirely for source builds.
+1. `LICENSE` → canonical AGPL-3.0 text (`gh api licenses/agpl-3.0 --jq .body`).
+2. `COMMERCIAL-LICENSE.md` — copy `pqforge_ffi`'s, adjusted to name both
+   packages (one commercial agreement should cover the stack).
+3. `NOTICE` — copyright + dual-license statement (no §7 exception needed).
+4. `README` — License section (dual license; MIT preserved ≤ 0.3.0) + the
+   §1.1 acceleration section.
+5. `CHANGELOG` — **BREAKING (license)** entry under `0.4.0 (unreleased)`. The
+   pubspec version bump itself happens on the release branch per the repo's
+   flow, followed by `tool/version/generate_version.dart` regeneration (its
+   `--check` gates CI; `bin/src/version.g.dart` is generated, never
+   hand-edited).
+6. Follow the repo's gitflow: feature branch → `develop` → `main` → tag
+   `v0.4.0`; keep its CI gates green (`dart format --set-exit-if-changed`,
+   version-generator `--check`, visibility-generator `--check`, streaming
+   memory gate, OpenSSL interop, CodeQL).
+7. pub.dev publish of 0.4.0 **after** `pqforge_ffi` 0.2.0 is on pub.dev
+   (§1's ordering).
 
 ## 3. Sequencing
 
-| When | What |
-| --- | --- |
-| now (pqforge 0.3.x patch) | §1.3 README disclosure + §1.1 seam-freeze note |
-| pqforge 0.3.x minor | §1.2 conformance export — unblocks upstream-verified CI here |
-| pqforge 0.4.0 | §1.4 AEAD seam + §1.5 RNG note (Phase β complete) |
-| pqforge_ffi v0.2 | checksum-verified loader + fetch tool; Native Assets spike |
+| Step | Package | Version | What |
+| --- | --- | --- | --- |
+| 1 (done) | pqforge_ffi | v0.1.0 | GitHub release with binaries + SHA256SUMS, dual-licensed |
+| 2 | pqforge_ffi | v0.2.0 | verified loader + baked checksums + pub.dev publish readiness → **publish to pub.dev** |
+| 3 | pqforge | v0.4.0 | **relicense (§2)** + dependency on `pqforge_ffi ^0.2.0` + auto-registration + `accelerate` CLI + conformance export + seam freeze → publish |
+| 4 | pqforge | v0.5.0 | AEAD engine seam + RNG guarantee (Phase β complete) |
+| 5 | pqforge_ffi | v0.3.x | Native Assets (`hook/build.dart`) auto-build; mobile prebuilts |
 
-## 4. Explicit non-goals
+## 4. Rules that still hold
 
-- No `pqforge → pqforge_ffi` dependency in any form (license, §0).
-- No auto-download inside `pqforge` or `pqforge_ffi` at runtime — fetching
-  executable code over the network belongs to the app's build/deploy step,
-  under its own supply-chain controls.
-- No divergence of the standalone `PFE1` surface: it stays, but the drop-in
-  provider path is the primary integration story (Model B in
+- **No silent runtime downloads.** Fetching executable code is always an
+  explicit action (`pqforge accelerate fetch`) or the app's own build/deploy
+  step — never implicit inside a crypto call. Auto-*registration* of an
+  already-present, checksum-verified library is fine; auto-*download* is not.
+- **Checksums are pinned in source** (shipped in the package), never fetched
+  at runtime — a fetched checksum verifies nothing.
+- **The pure-Dart path remains a first-class, complete implementation** — the
+  stack must stay fully functional (and fully tested) with no native library.
+- **PFE1 standalone surface stays**, but the provider path is the primary
+  integration story (Model B in
   [`INTEGRATION_AND_HYBRID_PLAN.md`](INTEGRATION_AND_HYBRID_PLAN.md)).
