@@ -89,5 +89,4 @@ jobs:
 
             Verify a download before loading it: `sha256sum -c SHA256SUMS --ignore-missing`.
 
-            Dual-licensed **AGPL-3.0-only OR commercial** — see `LICENSE` and
-            `COMMERCIAL-LICENSE.md` in the repository.
+            Licensed under the **MIT License** — see `LICENSE` in the repository.

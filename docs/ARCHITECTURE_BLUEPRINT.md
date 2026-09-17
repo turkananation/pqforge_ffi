@@ -69,7 +69,7 @@ pqforge_ffi/
 ├── analysis_options.yaml
 ├── CHANGELOG.md
 ├── README.md
-├── LICENSE                           # dual: AGPL-3.0-or-later OR commercial
+├── LICENSE                           # MIT
 ├── hook/
 │   └── build.dart                    # Native Assets: fetch + SHA-256 verify + link, else fallback
 ├── lib/
@@ -208,7 +208,7 @@ members = ["crates/pqforge_core"]
 
 [workspace.package]
 edition = "2021"
-license = "AGPL-3.0-or-later OR LicenseRef-Commercial"
+license = "MIT"
 rust-version = "1.82"
 
 [profile.release]

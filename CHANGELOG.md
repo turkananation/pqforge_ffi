@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Relicensed to MIT. Dual AGPL-3.0-only / commercial licensing is dropped;
+  `COMMERCIAL-LICENSE.md` is removed.
+
 ## 0.1.0
 
 Initial release.
@@ -20,5 +25,3 @@ Initial release.
   degrades silently to pure Dart when the native library is absent or fails
   validation; deterministic operations are proven byte-identical by
   cross-implementation known-answer and agreement tests.
-- Relicensed from MIT to dual licensing: AGPL-3.0-only or a commercial
-  license (see `LICENSE` and `COMMERCIAL-LICENSE.md`).

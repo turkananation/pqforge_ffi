@@ -193,22 +193,5 @@ party — review before production use with real key material.
 
 ## License
 
-`pqforge_ffi` is **dual-licensed** — choose the option that fits how you ship:
+`pqforge_ffi` is licensed under the [MIT License](LICENSE).
 
-- **[AGPL-3.0-only](LICENSE)** — free, for open-source use. If you distribute
-  an application built on `pqforge_ffi`, or let users interact with one over a
-  network (SaaS, APIs, hosted apps), the AGPL requires you to make that
-  application's complete source code available under the same license. A
-  [NOTICE](NOTICE) grants the AGPL §7 additional permission needed to link
-  against AWS-LC's permissively licensed code.
-- **[Commercial](COMMERCIAL-LICENSE.md)** — for closed-source or proprietary
-  products and services that can't meet the AGPL's source-disclosure terms.
-  Contact **[turkananation@gmail.com](mailto:turkananation@gmail.com)** with subject
-  `pqforge_ffi commercial license`.
-
-In plain terms: open-source projects use it freely; businesses that keep their
-code closed purchase a license.
-
-Versions up to and including commit `2f3ae05` were published under the MIT
-license; that grant remains valid for those historical versions. Everything
-from v0.1.0 onward is AGPL-3.0-only OR commercial.

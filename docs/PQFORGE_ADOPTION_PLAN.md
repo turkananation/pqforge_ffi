@@ -1,10 +1,10 @@
-# pqforge × pqforge_ffi — unified AGPL licensing and dependency plan
+# pqforge × pqforge_ffi — dependency and adoption plan
 
-> **Status:** plan, **revision 2** (2026-07-04). Supersedes revision 1's ground
-> rules: by owner decision, `pqforge` **switches from MIT to the same dual
-> license as `pqforge_ffi` (AGPL-3.0-only OR commercial)**, and the dependency
-> arrow `pqforge → pqforge_ffi` is **permitted**. Written against `pqforge_ffi`
-> v0.1.0, whose GitHub release ships prebuilt native libraries
+> **Status:** plan, **revision 3** (2026-09-18). Supersedes revision 2's
+> dual-license (AGPL-3.0-only OR commercial) unification: `pqforge_ffi` is
+> **MIT**, matching `pqforge`. The dependency arrow `pqforge → pqforge_ffi`
+> remains **permitted**. Written against `pqforge_ffi` v0.1.0, whose GitHub
+> release ships prebuilt native libraries
 > (`libpqforge_core-linux-x86_64.so`, `-linux-aarch64.so`,
 > `-macos-{aarch64,x86_64}.dylib`, `pqforge_core-windows-x86_64.dll`) plus a
 > `SHA256SUMS` manifest, and `pqforge` 0.3.0 (MIT, on pub.dev). Companion to
@@ -12,28 +12,20 @@
 
 ## 0. License strategy — one stack, one story
 
-- **Both packages: `AGPL-3.0-only OR commercial`.** `pqforge` relicenses at
-  **v0.4.0**; `pqforge_ffi` already ships dual-licensed at v0.1.0. The pitch
-  becomes uniform: *open-source projects use the entire PQC stack free under
-  the AGPL; businesses that keep their code closed (including SaaS) purchase
-  one commercial license covering both packages.*
-- **History stays honest.** MIT grants are irrevocable for the versions that
-  carried them: `pqforge ≤ 0.3.0` remains MIT forever (users may pin or fork
-  it under MIT); everything from 0.4.0 onward is AGPL/commercial. State this
-  in `pqforge`'s README and CHANGELOG exactly as `pqforge_ffi`'s README does
-  for its own MIT history (≤ `2f3ae05`).
-- **Copyright hygiene.** Dual licensing requires the licensor to own (or have
-  compatible grants for) all inbound contributions. Turkana Nation is sole
-  author of both packages today; before accepting external PRs, add a short
-  CONTRIBUTING note (inbound = outbound + relicense permission, or a DCO).
-- **No §7 NOTICE needed in `pqforge`** — it links no OpenSSL-licensed code;
-  the AWS-LC linking exception stays in `pqforge_ffi`'s NOTICE only. `pqforge`
-  still gets a NOTICE stating the dual license and a COMMERCIAL-LICENSE.md
-  mirroring `pqforge_ffi`'s (same contact:
-  [turkananation@gmail.com](mailto:turkananation@gmail.com)).
+- **Both packages: MIT.** `pqforge_ffi` is MIT; `pqforge` already is. There is
+  no dual license, no AGPL option, and no commercial-license track.
+- **History stays honest.** `pqforge_ffi` briefly shipped under AGPL-3.0-only
+  OR commercial at v0.1.0; that dual license is withdrawn. Current `main` and
+  subsequent releases are MIT. `pqforge` has been MIT throughout.
+- **Copyright hygiene.** Turkana Nation is sole author of both packages today;
+  before accepting external PRs, add a short CONTRIBUTING note (inbound =
+  outbound).
+- **NOTICE** in `pqforge_ffi` records third-party components (AWS-LC,
+  `aws-lc-rs`, zeroize, Dart deps). MIT is compatible with those licenses; no
+  AGPL §7 linking exception is required.
 - **Dependency-license check:** `pqforge`'s deps (pointycastle MIT,
   cryptography Apache-2.0, args/path/etc. BSD) are all permissive and
-  AGPL-compatible — nothing blocks the switch.
+  MIT-compatible.
 
 ## 1. Dependency architecture — the arrow inverts
 
@@ -79,7 +71,7 @@ for a user to get native speed when a verified library is present.
   registers providers without `pqforge` compile-depending on `pqforge_ffi`.
 - **Prerequisite:** `pqforge_ffi` must be **published to pub.dev** (it is not
   today — v0.1.0 is a GitHub release only). It already carries a proper
-  LICENSE; pub.dev accepts AGPL-licensed packages.
+  LICENSE; pub.dev accepts MIT-licensed packages.
 
 ### 1.1 What `pqforge` 0.4.0 does with the dependency
 
@@ -137,33 +129,22 @@ for a user to get native speed when a verified library is present.
   accelerator take AES-256-GCM / ChaCha20-Poly1305 (completes Phase β).
 - **RNG note + test** that `PqRandom.generator` governs every random draw.
 
-## 2. Relicensing `pqforge` — exact mechanical steps (v0.4.0)
+## 2. Relicensing — withdrawn
 
-1. `LICENSE` → canonical AGPL-3.0 text (`gh api licenses/agpl-3.0 --jq .body`).
-2. `COMMERCIAL-LICENSE.md` — copy `pqforge_ffi`'s, adjusted to name both
-   packages (one commercial agreement should cover the stack).
-3. `NOTICE` — copyright + dual-license statement (no §7 exception needed).
-4. `README` — License section (dual license; MIT preserved ≤ 0.3.0) + the
-   §1.1 acceleration section.
-5. `CHANGELOG` — **BREAKING (license)** entry under `0.4.0 (unreleased)`. The
-   pubspec version bump itself happens on the release branch per the repo's
-   flow, followed by `tool/version/generate_version.dart` regeneration (its
-   `--check` gates CI; `bin/src/version.g.dart` is generated, never
-   hand-edited).
-6. Follow the repo's gitflow: feature branch → `develop` → `main` → tag
-   `v0.4.0`; keep its CI gates green (`dart format --set-exit-if-changed`,
-   version-generator `--check`, visibility-generator `--check`, streaming
-   memory gate, OpenSSL interop, CodeQL).
-7. pub.dev publish of 0.4.0 **after** `pqforge_ffi` 0.2.0 is on pub.dev
-   (§1's ordering).
+Revision 2 planned relicensing `pqforge` to AGPL-3.0-only OR commercial at
+v0.4.0, copying `pqforge_ffi`'s dual-license files. That is **withdrawn**:
+`pqforge_ffi` is MIT, `pqforge` stays MIT, and there is no
+`COMMERCIAL-LICENSE.md`. v0.4.0 of `pqforge` is the acceleration-adoption
+release only (dependency, auto-registration, CLI, conformance, seam freeze).
 
 ## 3. Sequencing
 
 | Step | Package | Version | What |
 | --- | --- | --- | --- |
-| 1 (done) | pqforge_ffi | v0.1.0 | GitHub release with binaries + SHA256SUMS, dual-licensed |
+| 1 (done) | pqforge_ffi | v0.1.0 | GitHub release with binaries + SHA256SUMS |
+| 1b (done) | pqforge_ffi | — | Relicensed to MIT; dual AGPL/commercial dropped |
 | 2 | pqforge_ffi | v0.2.0 | verified loader + baked checksums + pub.dev publish readiness → **publish to pub.dev** |
-| 3 | pqforge | v0.4.0 | **relicense (§2)** + dependency on `pqforge_ffi ^0.2.0` + auto-registration + `accelerate` CLI + conformance export + seam freeze → publish |
+| 3 | pqforge | v0.4.0 | dependency on `pqforge_ffi ^0.2.0` + auto-registration + `accelerate` CLI + conformance export + seam freeze → publish |
 | 4 | pqforge | v0.5.0 | AEAD engine seam + RNG guarantee (Phase β complete) |
 | 5 | pqforge_ffi | v0.3.x | Native Assets (`hook/build.dart`) auto-build; mobile prebuilts |
 
