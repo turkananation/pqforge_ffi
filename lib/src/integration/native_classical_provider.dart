@@ -19,11 +19,12 @@ import '../backend/native_backend.dart';
 /// pq.PqClassical.useDefault(); // restore the pure-Dart provider
 /// ```
 ///
-/// **ECDSA-P256 falls through to [fallback]** (default
-/// [pq.PqPureDartClassicalProvider]): aws-lc-rs exposes no raw-scalar-only ECDSA
-/// key constructor, so the pure-Dart PointyCastle path (RFC-6979) stays
-/// authoritative for P-256. X25519 and Ed25519 are the hybrid defaults, so the
-/// common path is fully accelerated.
+/// **ECDSA-P256 and NIST-curve ECDH (P-256, P-384) fall through to [fallback]**
+/// (default [pq.PqPureDartClassicalProvider]): aws-lc-rs exposes no
+/// raw-scalar-only ECDSA key constructor, so the pure-Dart PointyCastle path
+/// (RFC-6979) stays authoritative for P-256 signatures, and NIST ECDH is not
+/// bound yet. X25519 and Ed25519 are the hybrid defaults, so the common path is
+/// fully accelerated.
 class NativePqforgeClassicalProvider implements pq.PqClassicalProvider {
   /// Wraps an already-open [NativeBackend]. [fallback] handles ECDSA-P256
   /// (defaults to the pure-Dart provider).
@@ -93,6 +94,46 @@ class NativePqforgeClassicalProvider implements pq.PqClassicalProvider {
     required Uint8List message,
     required Uint8List signature,
   }) => Future.value(_native.ed25519Verify(publicKey, message, signature));
+
+  // --- NIST-curve ECDH (delegated to the pure-Dart fallback) ---
+  //
+  // aws-lc-rs exposes NIST-curve ECDH, but this package does not bind it yet.
+  // These four methods therefore fall through to [fallback], exactly as
+  // ECDSA-P256 below does. That keeps the hybrid handshake's common path
+  // (X25519 + Ed25519) fully accelerated while NIST ECDH stays correct and
+  // unaccelerated.
+  //
+  // Delegating is the honest answer: the alternative is implementing P-256/P-384
+  // ECDH on top of the wrong primitive. A binding can be added later without
+  // changing this class's contract.
+
+  @override
+  Future<({Uint8List publicKey, Uint8List secretKey})> p256GenerateKeyPair({
+    Uint8List? seed,
+  }) => fallback.p256GenerateKeyPair(seed: seed);
+
+  @override
+  Future<Uint8List> p256SharedSecret({
+    required Uint8List secretKey,
+    required Uint8List remotePublicKey,
+  }) => fallback.p256SharedSecret(
+    secretKey: secretKey,
+    remotePublicKey: remotePublicKey,
+  );
+
+  @override
+  Future<({Uint8List publicKey, Uint8List secretKey})> p384GenerateKeyPair({
+    Uint8List? seed,
+  }) => fallback.p384GenerateKeyPair(seed: seed);
+
+  @override
+  Future<Uint8List> p384SharedSecret({
+    required Uint8List secretKey,
+    required Uint8List remotePublicKey,
+  }) => fallback.p384SharedSecret(
+    secretKey: secretKey,
+    remotePublicKey: remotePublicKey,
+  );
 
   // --- ECDSA-P256 (delegated to the pure-Dart fallback) ---
 
