@@ -1,5 +1,45 @@
 # Changelog
 
+## 0.1.1
+
+### Added
+
+- `NativePqforgeClassicalProvider` implements the four NIST-curve ECDH methods
+  `PqClassicalProvider` gained in pqforge 0.4 — `p256GenerateKeyPair`,
+  `p256SharedSecret`, `p384GenerateKeyPair`, `p384SharedSecret`. They delegate
+  to `fallback`, exactly as ECDSA-P256 already did.
+
+### Changed
+
+- `pqforge` constraint widened from `^0.3.0` to `^0.4.6`, which also moves
+  `pqcrypto` from 0.3.1 to 0.4.2.
+
+### Why
+
+This package was pinned two major versions behind and could not move. Against
+pqforge 0.4.x it did not compile at all:
+
+```
+Error: The non-abstract class 'NativePqforgeClassicalProvider' is missing
+implementations for these members:
+  p256GenerateKeyPair, p256SharedSecret, p384GenerateKeyPair, p384SharedSecret
+```
+
+Because `pqforge` was pinned rather than merely stale, the failure was invisible
+until someone widened the constraint — which is why it sat there.
+
+Delegating to `fallback` is the honest option. aws-lc-rs does expose NIST ECDH,
+but this package does not bind it; adding a binding later needs no change to
+this class's contract. P-256/P-384 ECDH is therefore correct but not
+accelerated. X25519 and Ed25519 — the hybrid defaults — remain fully native.
+
+Also worth recording: `pana` scored this 150/160 with the whole gap being "all
+dependencies are supported in the latest version", because `pqforge: ^0.3.0`
+while 0.4.6 was published. Pinning a dependency is a way of silently opting out
+of both the points and the updates.
+
+# Changelog
+
 ## Unreleased
 
 - Relicensed to MIT. Dual AGPL-3.0-only / commercial licensing is dropped;

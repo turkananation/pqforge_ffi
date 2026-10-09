@@ -3,7 +3,7 @@ description: >-
   Hardware-accelerated post-quantum cryptography for Dart: a native AWS-LC
   engine (ML-KEM, ML-DSA, X25519, Ed25519, AEAD, STREAM) with a byte-compatible
   pure-Dart fallback.
-version: 0.1.0
+version: 0.1.1
 repository: https://github.com/turkananation/pqforge_ffi
 
 environment:
@@ -14,7 +14,7 @@ dependencies:
   ffi: ^2.2.0
   pointycastle: ^4.0.0
   # 0.3.0 adds the classical + lattice provider seams this package accelerates.
-  pqforge: ^0.3.0
+  pqforge: ^0.4.6
   # path: ^1.9.0
 
 dev_dependencies:
